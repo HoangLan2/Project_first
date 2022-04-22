@@ -1,0 +1,21 @@
+<div class="bar">
+  <div class="row">
+    <div class="col-md-3">
+      <p class="{{activeStep >= 0 ? 'active': ''}}">Thông tin cá nhân</p>
+    </div>
+    <div class="col-md-3">
+      <p class="{{activeStep >= 1 ? 'active': ''}}">Đang giao hàng</p>
+    </div>
+    <div class="col-md-3">
+      <p class="{{activeStep >= 2 ? 'active': ''}}">Sự thanh toán</p>
+    </div>
+    <div class="col-md-3">
+      <p class="{{activeStep >= 3 ? 'active': ''}}">Xem lại & Xác nhận</p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <ngb-progressbar type="info" [value]="activeValue" height="5px"></ngb-progressbar>
+    </div>
+  </div>
+</div>

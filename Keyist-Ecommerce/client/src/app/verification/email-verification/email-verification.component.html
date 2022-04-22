@@ -1,0 +1,23 @@
+<div class="email-verification container">
+  <div class="row">
+    <div class="col-md-12 col-12 text-center">
+      <span class="fa {{isError ? 'fa-exclamation-triangle' : 'fa-check'}}"></span>
+    </div>
+  </div>
+  <div *ngIf="isVerified && !isError" class="row">
+    <div class="col-md-12 col-12">
+      <p>Tài khoản của bạn đã được xác minh thành công. Bắt đầu mua sắm ngay bây giờ!</p>
+      <div *ngIf="!isLoggedIn">Vui lòng <a routerLink="/login">đăng nhập.</a></div>
+      <a class="btn home" routerLink="/">Trang chủ</a>
+      <a class="btn products" routerLink="/account/browse">Sản phẩm</a>
+    </div>
+  </div>
+
+  <div *ngIf="!isVerified && !isError" class="row">
+    <p>Đang gửi yêu cầu...</p>
+  </div>
+
+  <div *ngIf="isError" class="row">
+    <p>Không thể kích hoạt vào lúc này. Vui lòng liên hệ với nhóm hỗ trợ của chúng tôi.</p>
+  </div>
+</div>

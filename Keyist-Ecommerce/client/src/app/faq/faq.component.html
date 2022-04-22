@@ -1,0 +1,27 @@
+<div class="container faq">
+  <div class="title">
+    <p>Câu hỏi thường gặp</p>
+  </div>
+  <hr>
+  <div class="accordion">
+    <ngb-accordion #acc="ngbAccordion" [closeOthers]="false" [destroyOnHide]="true">
+      <ngb-panel id="static-1">
+        <ng-template ngbPanelTitle>
+          <span class="panel-title">Đồ án này của ai?</span>
+        </ng-template>
+        <ng-template ngbPanelContent>
+          Đây là sản phẩm đồ án của sinh viên trường Đại Học Công Nghiệp Hà Nội Nguyễn Hoàng Lan (2018603430) lớp Công nghệ thông tin 4 khóa 13. Đồ án có tên "Xây dựng website bán quần áo bằng Java Spring boot, Angular".
+        </ng-template>
+      </ngb-panel>
+      <!-- <ngb-panel id="static-2">
+        <ng-template ngbPanelTitle>
+          <span class="panel-title w-100">How can?</span>
+        </ng-template>
+        <ng-template ngbPanelContent>
+          Source code can be found in <a href="https://github.com/antkaynak">my github page.</a>
+          If you want to contact me you can mail me at antkaynak1@gmail.com
+        </ng-template>
+      </ngb-panel> -->
+    </ngb-accordion>
+  </div>
+</div>

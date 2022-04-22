@@ -1,0 +1,132 @@
+<div class="confirmation">
+
+  <div *ngIf="innerLoading" class="loader"></div>
+
+  <div *ngIf="!innerLoading">
+    <div class="panel">
+      <div class="info row">
+        <div class="col-md-12">
+          <div class="title row">
+            <div class="col-md-10">
+              <p>Thông tin vận chuyển</p>
+            </div>
+            <div class="col-md-2">
+              <a class="edit" routerLink="/checkout/personal">
+                <p>Chỉnh sửa</p>
+              </a>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <p>Họ: <span>{{(orderState | async).personal.shipName}}</span></p>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <p>Quốc gia: <span>{{(orderState | async).shipping.country}}</span></p>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <p>Thành phố: <span>{{(orderState | async).shipping.city}}</span></p>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <p>Địa chỉ: <span>{{(orderState | async).shipping.shipAddress}}</span></p>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <p>Số điện thoại: <span>{{(orderState | async).personal.phone}}</span></p>
+            </div>
+          </div>
+
+          <div class="row" *ngIf="!(orderState | async).shipping.billingAddress">
+            <div class="col-md-12">
+              <p class="billing">Sử dụng địa chỉ giao hàng để thanh toán</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+      <div class="info secondary row" *ngIf="(orderState | async).shipping.billingAddress">
+        <div class="col-md-12">
+          <div class="title row">
+            <div class="col-md-10">
+              <p>Thông tin thanh toán</p>
+            </div>
+            <div class="col-md-2">
+              <a class="edit" routerLink="/checkout/personal">
+                <p>Chỉnh sửa</p>
+              </a>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <p>Địa chỉ: <span>{{(orderState | async).shipping.billingAddress}}</span></p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="info lower row">
+        <div class="col-md-12">
+          <div class="title row">
+            <div class="col-md-10">
+              <p>Thông tin thanh toán</p>
+            </div>
+            <div class="col-md-2">
+              <a class="edit" routerLink="/checkout/payment">
+                <p>Chỉnh sửa</p>
+              </a>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <p>Số thẻ: <span>
+                  **********
+                  {{(orderState | async).payment.cardNo.toString()
+                  .substr((orderState | async).payment.cardNo.toString().length - 4,(orderState | async).payment.cardNo.toString().length)}}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <p>Chủ thẻ: <span>{{(orderState | async).payment.cardOwner}}</span></p>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <p>Ngày hết hạn:
+                <span>{{(orderState | async).payment.cardExp.month}}/{{(orderState | async).payment.cardExp.year}}</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <p>CCV: <span>{{(orderState | async).payment.cardCCV}}</span></p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,396 @@
+use lyra;
+
+drop table if exists color;
+
+create table color
+(
+    id   int auto_increment
+        primary key,
+    name varchar(50) not null,
+    hex  varchar(50) not null,
+    constraint color_hex_uindex
+        unique (hex),
+    constraint color_name_uindex
+        unique (name)
+);
+
+drop table if exists discount;
+
+create table discount
+(
+    id               int auto_increment
+        primary key,
+    code             varchar(240)         not null,
+    discount_percent int                  not null,
+    status           tinyint(1) default 1 not null,
+    constraint code
+        unique (code)
+);
+
+drop table if exists oauth_access_token;
+
+create table oauth_access_token
+(
+    token_id          varchar(255) null,
+    token             mediumblob   null,
+    authentication_id varchar(255) not null
+        primary key,
+    user_name         varchar(255) null,
+    client_id         varchar(255) null,
+    authentication    mediumblob   null,
+    refresh_token     varchar(255) null
+);
+
+drop table if exists oauth_approvals;
+
+create table oauth_approvals
+(
+    userId         varchar(255)                            null,
+    clientId       varchar(255)                            null,
+    scope          varchar(255)                            null,
+    status         varchar(10)                             null,
+    expiresAt      timestamp default CURRENT_TIMESTAMP     not null on update CURRENT_TIMESTAMP,
+    lastModifiedAt timestamp not null
+);
+
+drop table if exists oauth_client_details;
+
+create table oauth_client_details
+(
+    client_id               varchar(255)  not null
+        primary key,
+    resource_ids            varchar(255)  null,
+    client_secret           varchar(255)  null,
+    scope                   varchar(255)  null,
+    authorized_grant_types  varchar(255)  null,
+    web_server_redirect_uri varchar(255)  null,
+    authorities             varchar(255)  null,
+    access_token_validity   int           null,
+    refresh_token_validity  int           null,
+    additional_information  varchar(4096) null,
+    autoapprove             varchar(255)  null
+);
+
+drop table if exists oauth_client_token;
+
+create table oauth_client_token
+(
+    token_id          varchar(255) null,
+    token             mediumblob   null,
+    authentication_id varchar(255) not null
+        primary key,
+    user_name         varchar(255) null,
+    client_id         varchar(255) null
+);
+
+drop table if exists oauth_code;
+
+create table oauth_code
+(
+    code           varchar(255) null,
+    authentication mediumblob   null
+);
+
+drop table if exists oauth_refresh_token;
+
+create table oauth_refresh_token
+(
+    token_id       varchar(255) not null,
+    token          mediumblob   null,
+    authentication mediumblob   null
+);
+
+drop table if exists product_category;
+
+create table product_category
+(
+    id   int auto_increment
+        primary key,
+    name varchar(50) not null,
+    constraint name
+        unique (name)
+);
+
+drop table if exists product;
+
+create table product
+(
+    id           int auto_increment
+        primary key,
+    category_id  int                                  null,
+    sku          varchar(50)                          not null,
+    name         varchar(100)                         not null,
+    url          varchar(100)                         not null,
+    long_desc    text                                 not null,
+    date_created timestamp  default CURRENT_TIMESTAMP not null,
+    last_updated timestamp  default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
+    unlimited    tinyint(1) default 1                 null,
+    constraint product_ibfk_1
+        foreign key (category_id) references product_category (id)
+);
+
+create index category_id
+    on product (category_id);
+
+drop table if exists product_variant;
+
+create table product_variant
+(
+    id          int auto_increment
+        primary key,
+    product_id  int           null,
+    color_id    int           not null,
+    width       varchar(100)  null,
+    height      varchar(100)  null,
+    price       float(100, 2) not null,
+    composition varchar(259)  null,
+    cargo_price float(100, 2) not null,
+    tax_percent int default 0 null,
+    sell_count  int default 0 null,
+    stock       int           not null,
+    live        tinyint(1)    not null,
+    image       varchar(250)  null,
+    thumb       varchar(250)  null,
+    constraint color_id
+        foreign key (color_id) references color (id),
+    constraint product_id
+        foreign key (product_id) references product (id)
+);
+
+drop table if exists user;
+
+create table user
+(
+    id                int auto_increment
+        primary key,
+    email             varchar(500)                         not null,
+    password          varchar(500)                         not null,
+    first_name        varchar(50)                          null,
+    last_name         varchar(50)                          null,
+    city              varchar(90)                          null,
+    state             varchar(20)                          null,
+    zip               varchar(12)                          null,
+    email_verified    tinyint(1) default 0                 null,
+    registration_date timestamp  default CURRENT_TIMESTAMP null,
+    phone             varchar(20)                          null,
+    country           varchar(20)                          null,
+    address           varchar(100)                         null,
+    constraint email
+        unique (email)
+);
+
+drop table if exists cart;
+
+create table cart
+(
+    id                int auto_increment
+        primary key,
+    user_id           int                                 null,
+    discount_id       int                                 null,
+    total_cart_price  float     default 0                 not null,
+    total_cargo_price float     default 0                 not null,
+    total_price       float     default 0                 not null,
+    date_created      timestamp default CURRENT_TIMESTAMP not null,
+    constraint cart_ibfk_1
+        foreign key (user_id) references user (id),
+    constraint cart_ibfk_2
+        foreign key (discount_id) references discount (id)
+);
+
+create index discount_id
+    on cart (discount_id);
+
+create index user_id
+    on cart (user_id);
+
+drop table if exists cart_item;
+
+create table cart_item
+(
+    id                 int auto_increment
+        primary key,
+    cart_id            int not null,
+    product_variant_id int null,
+    amount             int not null,
+    constraint cart_item_ibfk_1
+        foreign key (cart_id) references cart (id),
+    constraint product_variant_id
+        foreign key (product_variant_id) references product_variant (id)
+);
+
+create index cart_id
+    on cart_item (cart_id);
+
+drop table if exists orders;
+
+create table orders
+(
+    id                int auto_increment
+        primary key,
+    user_id           int                                  not null,
+    ship_name         varchar(100)                         not null,
+    ship_address      varchar(100)                         not null,
+    billing_address   varchar(100)                         not null,
+    city              varchar(50)                          not null,
+    state             varchar(50)                          not null,
+    zip               varchar(20)                          null,
+    country           varchar(50)                          not null,
+    phone             varchar(20)                          not null,
+    total_price       float                                not null,
+    total_cargo_price float                                not null,
+    discount_id       int                                  null,
+    date              timestamp  default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
+    shipped           tinyint(1) default 0                 not null,
+    cargo_firm        varchar(100)                         null,
+    tracking_number   varchar(80)                          null,
+    constraint orders_ibfk_1
+        foreign key (user_id) references user (id),
+    constraint orders_ibfk_2
+        foreign key (discount_id) references discount (id)
+);
+
+drop table if exists order_detail;
+
+create table order_detail
+(
+    id                 int auto_increment
+        primary key,
+    order_id           int not null,
+    product_variant_id int null,
+    amount             int not null,
+    constraint order_detail_ibfk_1
+        foreign key (order_id) references orders (id),
+    constraint product_variant_id_ibfk_1
+        foreign key (product_variant_id) references product_variant (id)
+);
+
+create index order_id
+    on order_detail (order_id);
+
+create index discount_id
+    on orders (discount_id);
+
+create index user_id
+    on orders (user_id);
+
+drop table if exists password_reset_token;
+
+create table password_reset_token
+(
+    id          int auto_increment
+        primary key,
+    token       varchar(255)                        not null,
+    expiry_date timestamp default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
+    user_id     int                                 not null,
+    constraint user_id
+        unique (user_id),
+    constraint password_reset_token_ibfk_1
+        foreign key (user_id) references user (id)
+);
+
+drop table if exists verification_token;
+
+create table verification_token
+(
+    id          int auto_increment
+        primary key,
+    token       varchar(255)                        not null,
+    expiry_date timestamp default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
+    user_id     int                                 not null,
+    constraint verification_token_ibfk_1
+        foreign key (user_id) references user (id)
+);
+
+-- 1 Quần jeans trơn ống rộng 591 xanh nhạt
+INSERT INTO lyra.oauth_client_details (client_id, resource_ids, client_secret, scope, authorized_grant_types, web_server_redirect_uri, authorities, access_token_validity, refresh_token_validity, additional_information, autoapprove) VALUES ('test', 'resource-server-rest-api', '$2a$04$v8DNBoc36pw4c7b7Xyq/aeSpGneF9WciZUI9FibVz0neksUcPBXVS', 'read,write', 'password,authorization_code,refresh_token,implicit', null, 'USER', 10800, 2592000, null, null);
+
+INSERT INTO lyra.product_category (id, name) VALUES (1, 'Quần');
+INSERT INTO lyra.color (id, name, hex) VALUES (1, 'xanh nhạt', '#d3ffce');
+INSERT INTO lyra.product (id, category_id, sku, name, url, long_desc, date_created, last_updated, unlimited) VALUES (1, 1, 'NSYQD0004', 'Quần jeans trơn ống rộng', 'test', 'Quần jeans ống rộng dáng đứng phù hợp cho những bạn thích phong cách cổ xưa nhưng rất thời thượng ', '2022-03-17 09:50:48', '2022-04-2 01:55:43', 1);
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (1, 1, 1, '156-160cm', '43-46kg', 119000, 'Cotton 80%', 90000,0, 6,100,0, 'https://mcdn.nhanh.vn/store/4902/ps/20210715/z2611540932030_bbeaef06f0a8f0d27768faa2d223882d__1__thumb.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20210715/z2611540932030_bbeaef06f0a8f0d27768faa2d223882d__1__thumb.jpg');
+
+-- 2 Quần jeans trơn ống rộng 591 đen
+INSERT INTO lyra.color (id, name, hex) VALUES (2, 'đen', '#000000');
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (2, 1, 2, '156-160cm', '43-46kg', 139000, 'Cotton 80%', 100000,0, 6,50,0, 'https://mcdn.nhanh.vn/store/4902/ps/20210715/z2611540932030_bbeaef06f0a8f0d27768faa2d223882d__1__thumb.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20210715/z2611540932030_bbeaef06f0a8f0d27768faa2d223882d__1__thumb.jpg');
+
+-- 3 Quần kaki vải ống suông chun cạp sau 516 be
+INSERT INTO lyra.color (id, name, hex) VALUES (3, 'Be', '#fff68f');
+INSERT INTO lyra.product (id, category_id, sku, name, url, long_desc, date_created, last_updated, unlimited) VALUES (2, 1, 'NSYQD0002', 'Quần kaki vải ống suông chun cạp sau', 'test2', 'Quần kaki thả dáng giúp bạn năng động hơn trẻ trung hơn, dễ hoạt động trong các cuộc vui chơi ', '2022-03-17 09:50:48', '2022-04-2 01:55:43', 1);
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (3, 2, 3, '156-160cm', '43-46kg', 229000, 'Cotton 80%', 150000,0, 6,40,0, 'https://mcdn.nhanh.vn/store/4902/ps/20210715/z2611302677009_a8ffbc92d940d9c6e24b5da34941b052.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20210715/z2611302677009_a8ffbc92d940d9c6e24b5da34941b052.jpg');
+
+-- 4  Quần kaki vải ống suông chun cạp sau 516 trắng
+INSERT INTO lyra.color (id, name, hex) VALUES (4, 'Trắng', '#ffffff');
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (4, 2, 4, '156-160cm', '43-46kg', 229000, 'Cotton 80%', 170000,0, 6,50,0, 'https://mcdn.nhanh.vn/store/4902/ps/20210715/z2611302677009_a8ffbc92d940d9c6e24b5da34941b052.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20210715/z2611302677009_a8ffbc92d940d9c6e24b5da34941b052.jpg');
+
+-- 5 Quần bò suông túi sau cào rách 9125 xanh
+INSERT INTO lyra.color (id, name, hex) VALUES (5, 'Xanh', '#6fa8dc');
+INSERT INTO lyra.product (id, category_id, sku, name, url, long_desc, date_created, last_updated, unlimited) VALUES (3, 1, 'CSYQD0032', 'Quần bò suông túi sau cào rách', 'test3', 'Quần bò suông túi sau giúp bạn trở lên lịch sự nhưng không mất phần năng động. Với thiết kế túi sau to bản nâng tầm form dáng cho cơ thể.', '2022-03-17 09:50:48', '2022-04-2 01:55:43', 1);
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (5, 3, 5, '156-160cm', '43-46kg', 315000, 'Cotton 80%', 270000,0, 6,20,0, 'https://mcdn.nhanh.vn/store/4902/ps/20200923/119731187_1655560361281471_5089652933559720645_o_thumb.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20200923/119731187_1655560361281471_5089652933559720645_o_thumb.jpg');
+
+-- 6 Quần bò ống loe 962 xanh
+INSERT INTO lyra.product (id, category_id, sku, name, url, long_desc, date_created, last_updated, unlimited) VALUES (4, 1, 'CSYQD0032', 'Quần bò ống loe', 'test4', 'Quần bò ống loe mang lại cảm giác cổ điển nhưng hợp su hướng trẻ trung năng động. giúp bạn dễ dàng hoạt động trong những lần đi chơi hay chốn công sở.', '2022-03-17 09:50:48', '2022-04-2 01:55:43', 1);
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (6, 4, 5, '156-160cm', '43-46kg', 305000, 'Cotton 80%', 250000,0, 6,20,0, 'https://mcdn.nhanh.vn/store/4902/ps/20200923/119664911_1655560597948114_6481257265535022979_o.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20200923/119664911_1655560597948114_6481257265535022979_o.jpg');
+
+-- 7 Áo sơ mi cổ gân vest cộc tay 301 trắng
+INSERT INTO lyra.product_category (id, name) VALUES (2, 'Áo sơ mi');
+INSERT INTO lyra.product (id, category_id, sku, name, url, long_desc, date_created, last_updated, unlimited) VALUES (5, 2, 'NSYQD0004', 'Áo sơ mi cổ gân vest cộc tay', 'test5', 'Áo sơ mi cổ gân vest cộc tay là sự lựa chọn hoàn hảo cho những cô nàng công sở.', '2022-03-17 09:50:48', '2022-04-2 01:55:43', 1);
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (7, 5, 4, '156-160cm', '43-46kg', 229000, 'Cotton 80%', 200000,0, 6,10,0, 'https://mcdn.nhanh.vn/store/4902/ps/20210715/z2611302851298_c20714d3db1f956253628f730280dc8d_thumb.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20210715/z2611302851298_c20714d3db1f956253628f730280dc8d_thumb.jpg');
+
+-- 8 Áo sơ mi crop cố vest 003 hồng
+INSERT INTO lyra.color (id, name, hex) VALUES (6, 'Hồng', '#fce5cd');
+INSERT INTO lyra.product (id, category_id, sku, name, url, long_desc, date_created, last_updated, unlimited) VALUES (6, 2, 'CSYQD0032', 'Áo sơ mi crop cố vest', 'test6', 'Áo sơ mi crop cố vest rất thích hợp cho những chuyến đi chơi, du lịch nhẹ nhàng nhưng cá tính.', '2022-03-17 09:50:48', '2022-04-2 01:55:43', 1);
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (8, 6, 6, '90-100cm', '43-46kg', 195000, 'Cotton 80%', 140000,0, 6,60,0, 'https://mcdn.nhanh.vn/store/4902/ps/20200907/118375201_1635392216631619_4734375047139077467_o.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20200907/118375201_1635392216631619_4734375047139077467_o.jpg');
+
+-- 9 Chân váy dạ tweed cúc ngọc trai bên 256 trắng
+INSERT INTO lyra.product_category (id, name) VALUES (3, 'Chân váy');
+INSERT INTO lyra.product (id, category_id, sku, name, url, long_desc, date_created, last_updated, unlimited) VALUES (7, 3, 'CSYCN0065','Chân váy dạ tweed cúc ngọc trai','test7', 'Chân váy dạ tweed cúc ngọc trai cho những cô nàng công sở thì quá ưng nếu bạn muốn tôn lên đôi chân dài của mình.','2022-03-17 09:50:48', '2022-04-2 01:55:43', 1);
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (9, 7, 4, '50cm', '43-46kg', 195000, 'Cotton 80%', 100000,0, 6,70,0, 'https://mcdn.nhanh.vn/store/4902/ps/20201125/capture1056.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20201125/capture1056.jpg');
+
+-- 10 Chân váy xếp ly nửa đen
+INSERT INTO lyra.product (id, category_id, sku, name, url, long_desc, date_created, last_updated, unlimited) VALUES (8, 3, 'CSYCN0029','Chân váy xếp ly nửa ','test8', ' Hãy sắm ngay cho mình chiếc chân váy xếp ly nửa mê li này ngay thôi chần chờ gì nữa. ','2022-03-17 09:50:48', '2022-04-2 01:55:43', 1);
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (10, 8, 2, '50cm', '43-46kg', 205000, 'Cotton 80%', 150000,0, 6,34,0, 'https://mcdn.nhanh.vn/store/4902/ps/20200923/119722103_1655560501281457_8146349299900781487_o.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20200923/119722103_1655560501281457_8146349299900781487_o.jpg');
+
+-- 11 Chân váy xếp ly nửa be
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (11, 8, 3, '50cm', '43-46kg', 205000, 'Cotton 80%', 90.000,0, 6,39,0, 'https://mcdn.nhanh.vn/store/4902/ps/20200923/119722103_1655560501281457_8146349299900781487_o.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20200923/119722103_1655560501281457_8146349299900781487_o.jpg');
+
+-- 12 Chân váy ngắn nhún xòe 2 tầng trắng
+INSERT INTO lyra.product (id, category_id, sku, name, url, long_desc, date_created, last_updated, unlimited) VALUES (9, 3, 'CSYCN0029','Chân váy ngắn nhún xòe 2 tầng','test9', 'Chân váy ngắn nhún xòe 2 tầng, chiếc chân váy xinh xắn này thích không còn xa lạ với những cô nàng bánh bèo rồi chứ nhỉ, sao không cho sản phẩm vào giỏ hàng thôi nào','2022-03-17 09:50:48', '2022-04-2 01:55:43', 1);
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (12, 9, 4, '50cm', '43-46kg',169000, 'Cotton 80%', 100000,0, 6,46,0, 'https://mcdn.nhanh.vn/store/4902/ps/20200901/118310206_1632296920274482_4690908618122126507_o.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20200901/118310206_1632296920274482_4690908618122126507_o.jpg');
+
+-- 13 Váy sơ mi cổ V cài cúc buộc dây eo
+INSERT INTO lyra.color (id, name, hex) VALUES (7, 'Node', '#f6e0b5');
+INSERT INTO lyra.product_category (id, name) VALUES (4, 'Váy liền');
+INSERT INTO lyra.product (id, category_id, sku, name, url, long_desc, date_created, last_updated, unlimited) VALUES (10, 4, 'CSYCN0065','Váy sơ mi cổ V cài cúc buộc dây eo','test10', 'Váy sơ mi cổ V cài cúc buộc dây eo, đơn giản nhưng tinh tế phải không các tín đồ thời trang','2022-03-17 09:50:48', '2022-04-2 01:55:43', 1);
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (13, 10, 7, '50cm', '43-46kg', 225000, 'Cotton 80%', 170000,0, 6,48,0, 'https://mcdn.nhanh.vn/store/4902/ps/20210715/z2611302738027_2c29e6e67dc6ff12288ec43116536e44.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20210715/z2611302738027_2c29e6e67dc6ff12288ec43116536e44.jpg');
+
+-- 14 Váy tơ cổ vuông kẹp viền phối habutai
+INSERT INTO lyra.color (id, name, hex) VALUES (8, 'Xanh ngọc', '#8b9dc3');
+INSERT INTO lyra.product (id, category_id, sku, name, url, long_desc, date_created, last_updated, unlimited) VALUES (11, 4, 'LYTVD613','Váy tơ cổ vuông kẹp viền phối habutai','test11', 'Váy tơ cổ vuông kẹp viền phối habutai dành cho những cô nàng thơ mộng bánh bèo. Diện chiếc váy này trong những buổi hẹn đi chơi cùng người ấy thì còn gì bằng.','2022-03-17 09:50:48', '2022-04-2 01:55:43', 1);
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (14, 11, 8, '50cm', '43-46kg', 329000, 'Cotton 80%', 250000,0, 6,24,0, 'https://mcdn.nhanh.vn/store/4902/ps/20210527/z2513794155383_3d696794aa1ac8dede2965d6fc8e3f13.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20210527/z2513794155383_3d696794aa1ac8dede2965d6fc8e3f13.jpg');
+
+
+-- 15 Váy nhung cổ vuông phối xếp li ngực
+INSERT INTO lyra.color (id, name, hex) VALUES (9, 'Đỏ đô', '#b62020');
+INSERT INTO lyra.product (id, category_id, sku, name, url, long_desc, date_created, last_updated, unlimited) VALUES (12, 4, 'LWTVD336','Váy nhung cổ vuông phối xếp li ngực','test12', 'Váy nhung cổ vuông phối xếp li ngực, khuyến rũ nóng bỏng cho những buổi hẹn cùng người ấy.','2022-03-17 09:50:48', '2022-04-2 01:55:43', 1);
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (15, 12, 9, '50cm', '43-46kg', 399000, 'Cotton 80%', 250000,0, 6,17,0, 'https://mcdn.nhanh.vn/store/4902/ps/20210120/z2286766832080_d0038d2c9835c748769ecbf92a20d163.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20210120/z2286766832080_d0038d2c9835c748769ecbf92a20d163.jpg');
+
+-- 16 váy 2 dây nhung tăm kèm áo khoác nâu
+INSERT INTO lyra.color (id, name, hex) VALUES (10, 'Nâu', '#96613d');
+INSERT INTO lyra.product (id, category_id, sku, name, url, long_desc, date_created, last_updated, unlimited) VALUES (13, 4, 'LYTSE040','Váy 2 dây nhung tăm kèm áo khoác','test13', 'váy 2 dây nhung tăm kèm áo khoác phù hợp cho những buổi tiệc đi chơi cùng bạn bè, lịch sự kín đáo nhưng không thiếu phần nữ tính.','2022-03-17 09:50:48', '2022-04-2 01:55:43', 1);
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (16, 13, 10, '50cm', '43-46kg', 465000, 'Cotton 80%', 300000,0, 6,46,0, 'https://mcdn.nhanh.vn/store/4902/ps/20191030/img_6053.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20191030/img_6053.jpg');
+
+-- 17 Váy cổ vuông thắt nơ sau cutout trắng
+INSERT INTO lyra.product (id, category_id, sku, name, url, long_desc, date_created, last_updated, unlimited) VALUES (14, 4, 'CYVD290','Váy cổ vuông thắt nơ sau cutout','test14', 'Những cô nàng tôn thờ màu trắng thì ngại gì không quất luôn em váy cổ vuông thắt nơ sau cutout trắng','2022-03-17 09:50:48', '2022-04-2 01:55:43', 1);
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (17, 14, 4, '50cm', '43-46kg', 319000, 'Cotton 80%', 290000,0, 6,50,0, 'https://mcdn.nhanh.vn/store/4902/ps/20190609/img_1995.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20190609/img_1995.jpg');
+
+-- 18 Váy 2 dây caro buộc nơ vai đỏ 
+INSERT INTO lyra.color (id, name, hex) VALUES (11, 'Đỏ tươi', '#fe2e2e');
+INSERT INTO lyra.product (id, category_id, sku, name, url, long_desc, date_created, last_updated, unlimited) VALUES (15, 4, 'CYVD289','Váy 2 dây caro buộc nơ vai','test15', 'Váy 2 dây caro buộc nơ vai thích hợp cho những nàng thơ trong những chuyến đi dã ngoại nha.','2022-03-17 09:50:48', '2022-04-2 01:55:43', 1);
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (18, 15, 11, '50cm', '43-46kg', 219000, 'Cotton 80%', 200000,0, 6,20,0, 'https://mcdn.nhanh.vn/store/4902/ps/20190609/img_0513.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20190609/img_0513.jpg');
+
+
+-- 19 Váy 2 dây caro buộc nơ vai đỏ 
+INSERT INTO lyra.color (id, name, hex) VALUES (12, 'Vàng', '#ffdc73');
+INSERT INTO lyra.product (id, category_id, sku, name, url, long_desc, date_created, last_updated, unlimited) VALUES (16, 4, 'LYTAD022','Áo dài nhung tăm cổ vuông kẹp bèo','test16', 'Áo dài nhung tăm cổ vuông kẹp bèo, những ngày tết mà diện bộ  này thì mê li các cô nàng à.','2022-03-17 09:50:48', '2022-04-2 01:55:43', 1);
+INSERT INTO lyra.product_variant (id, product_id, color_id, width, height, price, composition, cargo_price, tax_percent, sell_count, stock, live, image, thumb) VALUES (19, 16, 12, '50cm', '43-46kg', 389000, 'Cotton 80%', 350000,0, 6,10,0, 'https://mcdn.nhanh.vn/store/4902/ps/20210104/0d08c84d5128a176f839.jpg', 'https://mcdn.nhanh.vn/store/4902/ps/20210104/0d08c84d5128a176f839.jpg');
+
